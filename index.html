@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WorkersPol TMA</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '800589358963665'); 
+      fbq('track', 'PageView');
+    </script>
+
+    <style>
+        :root {
+            --bg-dark: #0a1f2c;      /* Глибока морська хвиля */
+            --bg-gradient: radial-gradient(circle at top, #143e56 0%, #0a1f2c 100%);
+            --accent: #2da1c1;       /* Яскрава хвиля */
+            --card-bg: rgba(240, 247, 249, 0.95);
+            --text-main: #ffffff;
+            --text-dark: #1a3a4a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Динамічний слоган */
+        .slogan {
+            text-align: center;
+            margin: 30px 0;
+            transition: all 0.4s ease;
+            font-weight: bold;
+        }
+        .level-1 .slogan { font-size: 28px; margin-top: 60px; }
+        .level-2 .slogan, .level-3 .slogan { font-size: 16px; margin: 10px 0; opacity: 0.9; }
+
+        /* Кнопки вибору мови та партнерів */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        /* Заголовок вакансій */
+        #recruitment-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-text { font-size: 20px; color: var(--accent); font-weight: bold; }
+
+        /* Навігація внизу */
+        .nav-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-nav {
+            flex: 1;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn-exit { background: #e74c3c; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body id="body-app" class="level-1">
+
+    <div class="slogan" id="slogan-text">WorkersPol — представляем лучших</div>
+
+    <div id="step-1">
+        <button class="btn" onclick="setLang('ru')">Русский</button>
+        <button class="btn" onclick="setLang('uk')">Українська</button>
+        <button class="btn" onclick="setLang('pl')">Polski</button>
+        <button class="btn" onclick="setLang('en')">English</button>
+    </div>
+
+    <div id="step-2" class="hidden">
+        <div id="recruitment-header">
+            <div class="logo-text">Profesjonalny kierowca</div>
+        </div>
+        <button class="btn" onclick="goToLevel(3)">🚚 Список актуальних вакансій</button>
+        <button class="btn" onclick="showPartner('ADR')">🛡️ Курси ADR</button>
+        <button class="btn" onclick="showPartner('95')">📜 Код-95 (Партнери)</button>
+    </div>
+
+    <div id="step-3" class="hidden">
+        <div style="background: var(--card-bg); color: var(--text-dark); padding: 20px; border-radius: 15px;">
+            <h3 id="detail-title">Завантаження вакансій...</h3>
+            <p>Тут AI бот підбере вакансії або надасть інформацію про курси.</p>
+            <button class="btn" style="color: black;" onclick="askAI()">💬 Задати питання AI</button>
+        </div>
+    </div>
+
+    <div id="nav-container" class="nav-bar hidden">
+        <button id="nav-back" class="btn-nav hidden" onclick="goBack()">← Назад</button>
+        <button id="nav-exit" class="btn-nav btn-exit hidden" onclick="goHome()">Вихід</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentLevel = 1;
+        let selectedLang = 'ru';
+
+        const translations = {
+            ru: "WorkersPol — представляем лучших",
+            uk: "WorkersPol — представляємо найкращих",
+            pl: "WorkersPol — reprezentujemy najlepszych",
+            en: "WorkersPol — representing the best"
+        };
+
+        function setLang(lang) {
+            selectedLang = lang;
+            document.getElementById('slogan-text').innerText = translations[lang];
+            localStorage.setItem('driver_lang', lang);
+            fbq('track', 'Lead', { language: lang }); // Трекаємо вибір мови
+            goToLevel(2);
+        }
+
+        function goToLevel(level) {
+            currentLevel = level;
+            document.getElementById('body-app').className = 'level-' + level;
+            
+            // Керування видимістю блоків
+            document.getElementById('step-1').classList.toggle('hidden', level !== 1);
+            document.getElementById('step-2').classList.toggle('hidden', level !== 2);
+            document.getElementById('step-3').classList.toggle('hidden', level !== 3);
+            
+            // Керування навігацією
+            document.getElementById('nav-container').classList.toggle('hidden', level === 1);
+            document.getElementById('nav-exit').classList.toggle('hidden', level !== 2);
+            document.getElementById('nav-back').classList.toggle('hidden', level < 3);
+        }
+
+        function goBack() {
+            if (currentLevel > 1) goToLevel(currentLevel - 1);
+        }
+
+        function goHome() {
+            goToLevel(1);
+        }
+
+        function showPartner(type) {
+            document.getElementById('detail-title').innerText = type;
+            goToLevel(3);
+        }
+
+        function askAI() {
+            tg.sendData(JSON.stringify({action: "ask_ai", lang: selectedLang}));
+            tg.close(); // Або відкриваємо чат з ботом
+        }
+    </script>
+</body>
+</html>
