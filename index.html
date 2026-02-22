@@ -24,7 +24,7 @@
         :root {
             --bg-dark: #0a1f2c;      /* Глибока морська хвиля */
             --bg-gradient: radial-gradient(circle at top, #143e56 0%, #0a1f2c 100%);
-            --accent: #2da1c1;       /* Яскрава хвиля */
+            --accent: #2da1c1;       /* Світла морська хвиля */
             --card-bg: rgba(240, 247, 249, 0.95);
             --text-main: #ffffff;
             --text-dark: #1a3a4a;
@@ -37,7 +37,8 @@
             background: var(--bg-gradient);
             color: var(--text-main);
             min-height: 100vh;
-            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
             transition: all 0.3s ease;
         }
 
@@ -45,59 +46,65 @@
         .slogan {
             text-align: center;
             margin: 30px 0;
-            transition: all 0.4s ease;
             font-weight: bold;
+            transition: all 0.4s ease;
         }
-        .level-1 .slogan { font-size: 28px; margin-top: 60px; }
-        .level-2 .slogan, .level-3 .slogan { font-size: 16px; margin: 10px 0; opacity: 0.9; }
+        .level-1 .slogan { font-size: 26px; margin-top: 50px; }
+        .level-2 .slogan, .level-3 .slogan { font-size: 16px; margin: 10px 0; opacity: 0.8; font-weight: 300; }
 
-        /* Кнопки вибору мови та партнерів */
         .btn {
             display: block;
             width: 100%;
             padding: 15px;
             margin: 12px 0;
             border: 1px solid var(--accent);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
             color: white;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            backdrop-filter: blur(5px);
-            transition: transform 0.2s;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, background 0.2s;
+            box-sizing: border-box;
         }
-        .btn:active { transform: scale(0.98); }
+        .btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.15); }
 
-        /* Заголовок вакансій */
         #recruitment-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
-        .logo-text { font-size: 20px; color: var(--accent); font-weight: bold; }
+        .logo-text { font-size: 22px; color: var(--accent); font-weight: bold; letter-spacing: 1px; }
 
-        /* Навігація внизу */
+        /* Навігація */
         .nav-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 20px;
-            right: 20px;
+            margin-top: auto;
             display: flex;
             gap: 10px;
+            padding-bottom: 20px;
         }
         .btn-nav {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             background: var(--accent);
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             font-weight: bold;
-            text-align: center;
+            font-size: 14px;
         }
-        .btn-exit { background: #e74c3c; }
+        .btn-exit { background: #cf352e; }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+
+        .card {
+            background: var(--card-bg);
+            color: var(--text-dark);
+            padding: 20px;
+            border-radius: 18px;
+            margin-top: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body id="body-app" class="level-1">
@@ -115,22 +122,22 @@
         <div id="recruitment-header">
             <div class="logo-text">Profesjonalny kierowca</div>
         </div>
-        <button class="btn" onclick="goToLevel(3)">🚚 Список актуальних вакансій</button>
-        <button class="btn" onclick="showPartner('ADR')">🛡️ Курси ADR</button>
-        <button class="btn" onclick="showPartner('95')">📜 Код-95 (Партнери)</button>
+        <button id="btn-vacancies" class="btn" onclick="goToLevel(3)"></button>
+        <button id="btn-adr" class="btn" onclick="showPartner('ADR')"></button>
+        <button id="btn-code95" class="btn" onclick="showPartner('95')"></button>
     </div>
 
     <div id="step-3" class="hidden">
-        <div style="background: var(--card-bg); color: var(--text-dark); padding: 20px; border-radius: 15px;">
-            <h3 id="detail-title">Завантаження вакансій...</h3>
-            <p>Тут AI бот підбере вакансії або надасть інформацію про курси.</p>
-            <button class="btn" style="color: black;" onclick="askAI()">💬 Задати питання AI</button>
+        <div class="card">
+            <h3 id="detail-title"></h3>
+            <p id="detail-desc">...</p>
+            <button id="btn-ask" class="btn" style="color: #1a3a4a; border-color: #1a3a4a;" onclick="askAI()"></button>
         </div>
     </div>
 
     <div id="nav-container" class="nav-bar hidden">
-        <button id="nav-back" class="btn-nav hidden" onclick="goBack()">← Назад</button>
-        <button id="nav-exit" class="btn-nav btn-exit hidden" onclick="goHome()">Вихід</button>
+        <button id="nav-back" class="btn-nav hidden" onclick="goBack()"></button>
+        <button id="nav-exit" class="btn-nav btn-exit hidden" onclick="goHome()"></button>
     </div>
 
     <script>
@@ -141,17 +148,64 @@
         let selectedLang = 'ru';
 
         const translations = {
-            ru: "WorkersPol — представляем лучших",
-            uk: "WorkersPol — представляємо найкращих",
-            pl: "WorkersPol — reprezentujemy najlepszych",
-            en: "WorkersPol — representing the best"
+            ru: {
+                slogan: "WorkersPol — представляем лучших",
+                vacancies: "🚚 Список актуальных вакансий",
+                adr: "🛡️ Курсы ADR",
+                code95: "📜 Код-95 (Партнеры)",
+                ask: "💬 Задать вопрос AI",
+                loading: "Загрузка вакансий...",
+                back: "← Назад",
+                exit: "Выход"
+            },
+            uk: {
+                slogan: "WorkersPol — представляємо найкращих",
+                vacancies: "🚚 Список актуальних вакансій",
+                adr: "🛡️ Курси ADR",
+                code95: "📜 Код-95 (Партнери)",
+                ask: "💬 Задати питання AI",
+                loading: "Завантаження вакансій...",
+                back: "← Назад",
+                exit: "Вихід"
+            },
+            pl: {
+                slogan: "WorkersPol — reprezentujemy najlepszych",
+                vacancies: "🚚 Lista aktualnych ofert pracy",
+                adr: "🛡️ Kursy ADR",
+                code95: "📜 Kod-95 (Partnerzy)",
+                ask: "💬 Zadaj pytanie AI",
+                loading: "Ładowanie ofert...",
+                back: "← Powrót",
+                exit: "Wyjście"
+            },
+            en: {
+                slogan: "WorkersPol — representing the best",
+                vacancies: "🚚 List of current vacancies",
+                adr: "🛡️ ADR Courses",
+                code95: "📜 Code-95 (Partners)",
+                ask: "💬 Ask AI a question",
+                loading: "Loading vacancies...",
+                back: "← Back",
+                exit: "Exit"
+            }
         };
 
         function setLang(lang) {
             selectedLang = lang;
-            document.getElementById('slogan-text').innerText = translations[lang];
+            const data = translations[lang];
+            
+            // Оновлюємо всі тексти
+            document.getElementById('slogan-text').innerText = data.slogan;
+            document.getElementById('btn-vacancies').innerText = data.vacancies;
+            document.getElementById('btn-adr').innerText = data.adr;
+            document.getElementById('btn-code95').innerText = data.code95;
+            document.getElementById('btn-ask').innerText = data.ask;
+            document.getElementById('nav-back').innerText = data.back;
+            document.getElementById('nav-exit').innerText = data.exit;
+            document.getElementById('detail-title').innerText = data.loading;
+
             localStorage.setItem('driver_lang', lang);
-            fbq('track', 'Lead', { language: lang }); // Трекаємо вибір мови
+            fbq('track', 'Lead', { language: lang });
             goToLevel(2);
         }
 
@@ -159,33 +213,26 @@
             currentLevel = level;
             document.getElementById('body-app').className = 'level-' + level;
             
-            // Керування видимістю блоків
             document.getElementById('step-1').classList.toggle('hidden', level !== 1);
             document.getElementById('step-2').classList.toggle('hidden', level !== 2);
             document.getElementById('step-3').classList.toggle('hidden', level !== 3);
             
-            // Керування навігацією
             document.getElementById('nav-container').classList.toggle('hidden', level === 1);
             document.getElementById('nav-exit').classList.toggle('hidden', level !== 2);
             document.getElementById('nav-back').classList.toggle('hidden', level < 3);
         }
 
-        function goBack() {
-            if (currentLevel > 1) goToLevel(currentLevel - 1);
-        }
-
-        function goHome() {
-            goToLevel(1);
-        }
-
+        function goBack() { if (currentLevel > 1) goToLevel(currentLevel - 1); }
+        function goHome() { goToLevel(1); }
+        
         function showPartner(type) {
-            document.getElementById('detail-title').innerText = type;
+            const data = translations[selectedLang];
+            document.getElementById('detail-title').innerText = type === 'ADR' ? data.adr : data.code95;
             goToLevel(3);
         }
 
         function askAI() {
             tg.sendData(JSON.stringify({action: "ask_ai", lang: selectedLang}));
-            tg.close(); // Або відкриваємо чат з ботом
         }
     </script>
 </body>
